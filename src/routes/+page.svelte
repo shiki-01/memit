@@ -30,7 +30,7 @@
         {
             size: {
                 width: 200,
-                height: 150,
+                height: 400,
             },
             position: position2,
             style: {
@@ -57,8 +57,8 @@
             <Canvas canvas={$status} />
         {:else}
             <div
-                    class="w-full h-full -z-10"
-                    use:draggable={bgpos}
+                class="w-full h-full -z-10"
+                use:draggable={bgpos}
             />
             {#each canvaces as canvas}
                 <CanvasCard {canvas}/>
