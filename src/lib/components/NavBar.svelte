@@ -3,7 +3,7 @@
     import NavIcon from "$lib/components/NavIcon.svelte";
     import Color from "$lib/utils/colors";
     import { menupos } from "$lib/utils/interface";
-    import { handlePointerDown } from "$lib/utils/mouse";
+    import { draggable } from "$lib/utils/actions";
 
     const restProps = Object.fromEntries(
         Object.entries($$restProps).filter(([key]) => key !== 'class' && key !== 'style')
@@ -32,9 +32,7 @@
 >
     <button
         class="cursor-grab"
-        on:pointerdown={() => {
-            handlePointerDown(menupos)
-        }}
+        use:draggable={menupos}
     >
         <Icon icon="lucide:grip-horizontal" />
     </button>

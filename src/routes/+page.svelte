@@ -2,23 +2,17 @@
     import '../app.css';
     import Color from "$lib/utils/colors";
     import NavBar from "$lib/components/NavBar.svelte";
-    import Canvas from '$lib/components/Canvas.svelte';
-    import { menupos } from "$lib/utils/interface";
-	import { writable } from 'svelte/store';
+    import Canvas from "$lib/components/Canvas.svelte";
+    import CanvasCard from '$lib/components/CanvasCard.svelte';
+    import {menupos, bgpos, status} from "$lib/utils/interface";
+    import type {Canvas as CanvasType} from "$lib/types";
+    import {writable} from 'svelte/store';
+    import {draggable} from "$lib/utils/actions";
 
-    const position = writable({x: 100, y: 100})
-</script>
+    const position = writable({x: 200, y: 100});
+    const position2 = writable({x: 500, y: 100});
 
-<main
-    class="w-[100svw] h-[100svh] overflow-hidden relative touch-none"
-    style="background: { Color('teal','background','light') }"
->
-    <NavBar
-        class="absolute"
-        style="top: {$menupos.y}px; left: {$menupos.x}px"
-    />
-
-    <Canvas canvas={
+    const canvaces: CanvasType[] = [
         {
             size: {
                 width: 200,
@@ -28,9 +22,47 @@
             style: {
                 background: 'none',
                 backgroundColor: 'stone'
+            },
+            data: {
+                text: 'Hello World',
+            }
+        },
+        {
+            size: {
+                width: 200,
+                height: 150,
+            },
+            position: position2,
+            style: {
+                background: 'none',
+                backgroundColor: 'stone'
             }
         }
-    }
+    ];
+</script>
+
+<main
+        class="w-[100svw] h-[100svh] overflow-hidden"
+>
+    <NavBar
+            class="absolute z-20"
+            style="top: {$menupos.y}px; left: {$menupos.x}px"
     />
-    hello{$menupos.x} {$menupos.y}
+
+    <div
+            class="w-[100svw] h-[100svh] relative touch-none"
+            style="background: { Color('teal','background','light') }"
+    >
+        {#if $status}
+            <Canvas canvas={$status} />
+        {:else}
+            <div
+                    class="w-full h-full -z-10"
+                    use:draggable={bgpos}
+            />
+            {#each canvaces as canvas}
+                <CanvasCard {canvas}/>
+            {/each}
+        {/if}
+    </div>
 </main>

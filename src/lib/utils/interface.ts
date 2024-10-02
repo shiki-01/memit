@@ -1,6 +1,10 @@
-import type { Position } from "$lib/types";
+import type {Canvas, Position} from "$lib/types";
 import {type Writable, writable} from "svelte/store";
 
 const menupos: Writable<Position> = writable({x: 60, y: 60});
 
-export { menupos };
+const bgpos: Writable<Position> = writable({x: 0, y: 0});
+
+const status: Writable<null | Canvas> = writable(null);
+
+export { menupos, bgpos, status };

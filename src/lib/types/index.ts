@@ -25,8 +25,8 @@ interface Canvas {
         backgroundColor: Color;
     };
     data?: {
-        text: string;
-        paint: Vector[];
+        text?: string;
+        paint?: Vector[];
     }
     children?: Array<Canvas>;
 }
