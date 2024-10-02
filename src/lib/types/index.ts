@@ -1,8 +1,12 @@
+import type { Writable } from "svelte/store";
+
+type Position = {
+    x: number;
+    y: number;
+}
+
 interface Vector {
-    path: {
-        x: number;
-        y: number;
-    }[];
+    path: Position[];
     style: {
         strokeColor: string;
         fillColor: string;
@@ -15,19 +19,16 @@ interface Canvas {
         width: number;
         height: number;
     };
-    position: {
-        x: number;
-        y: number;
-    };
+    position: Writable<Position>;
     style: {
         background: 'none' | 'grid' | 'underline';
-        backgroundColor: string;
+        backgroundColor: Color;
     };
-    data: {
+    data?: {
         text: string;
         paint: Vector[];
     }
-    children: Array<Canvas>;
+    children?: Array<Canvas>;
 }
 
 type Color = 'stone' | 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'teal' | 'cyan' | 'blue' | 'indigo' | 'purple' | 'pink' | 'rose' | 'brown' | 'grey';
@@ -44,4 +45,4 @@ type ColorPalette = {
     };
 };
 
-export type { Vector, Canvas, Color, UI, Theme, ColorPalette };
+export type { Position, Vector, Canvas, Color, UI, Theme, ColorPalette };

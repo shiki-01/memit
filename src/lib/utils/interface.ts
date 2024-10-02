@@ -1,5 +1,6 @@
+import type { Position } from "$lib/types";
 import {type Writable, writable} from "svelte/store";
 
-const menupos: Writable<{x: number, y: number}> = writable({x: 0, y: 0});
+const menupos: Writable<Position> = writable({x: 60, y: 60});
 
 export { menupos };
