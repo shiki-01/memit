@@ -12,6 +12,7 @@ const draggable = (node: HTMLElement, params: Writable<Position>) => {
         startX = event.clientX - position.x;
         startY = event.clientY - position.y;
         node.setPointerCapture(event.pointerId);
+        node.style.cursor = 'grabbing';
     }
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -28,6 +29,7 @@ const draggable = (node: HTMLElement, params: Writable<Position>) => {
         isDragging = false;
         console.log('up')
         node.releasePointerCapture(event.pointerId);
+        node.style.cursor = 'grab';
     }
 
     const handleContextMenu = (event: MouseEvent) => {

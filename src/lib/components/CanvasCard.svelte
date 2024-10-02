@@ -40,7 +40,7 @@
     <canvas
         bind:this={canvasEl}
         {width} {height}
-        class="absolute z-10"
+        class="absolute cursor-grab z-10"
         style="
             top: {y}px;
             left: {x}px;

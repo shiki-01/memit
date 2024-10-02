@@ -19,7 +19,7 @@
 </script>
 
 <header
-    class="w-[80px] h-[400px] touch-none flex flex-col items-center py-6 rounded-full shadow-2xl { $$props.class }"
+    class="w-[400px] h-[80px] touch-none flex flex-row items-center px-6 rounded-full shadow-2xl { $$props.class }"
     style="
         -tw-shadow-color: { Color('stone','shadow','light') };
         --tw-shadow: var(--tw-shadow-colored);
@@ -36,7 +36,7 @@
     >
         <Icon icon="lucide:grip-horizontal" />
     </button>
-    <div class="h-full flex flex-col justify-center gap-6">
+    <div class="w-full flex flex-row justify-center items-center gap-6">
         <NavIcon icon="lucide:home" text="Home" />
         <NavIcon icon="lucide:clipboard" text="Card" />
         <NavIcon icon="lucide:camera" text="Camera" />
