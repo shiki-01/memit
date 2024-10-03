@@ -4,10 +4,12 @@
     import NavBar from "$lib/components/NavBar.svelte";
     import Canvas from "$lib/components/Canvas.svelte";
     import CanvasCard from '$lib/components/CanvasCard.svelte';
-    import {menupos, bgpos, status} from "$lib/utils/interface";
+    import {menupos, bgpos, bgscale, status} from "$lib/utils/interface";
     import type {Canvas as CanvasType} from "$lib/types";
     import {writable} from 'svelte/store';
+    import {pinch, pan} from 'svelte-gestures'
     import {draggable} from "$lib/utils/actions";
+    import {handlePinch, pos} from '$lib/utils/mouse'
 
     const position = writable({x: 200, y: 100});
     const position2 = writable({x: 500, y: 100});
@@ -48,7 +50,6 @@
             class="absolute z-20"
             style="top: {$menupos.y}px; left: {$menupos.x}px"
     />
-
     <div
             class="w-[100svw] h-[100svh] relative touch-none"
             style="background: { Color('teal','background','light') }"
@@ -58,7 +59,10 @@
         {:else}
             <div
                 class="w-full h-full -z-10"
+                use:pan={{ delay: 300 }}
                 use:draggable={bgpos}
+                use:pinch
+                on:pinch={handlePinch}
             />
             {#each canvaces as canvas}
                 <CanvasCard {canvas}/>

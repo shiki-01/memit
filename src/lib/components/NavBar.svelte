@@ -36,7 +36,7 @@
     >
         <Icon icon="lucide:grip-horizontal" />
     </button>
-    <div class="w-full flex flex-row justify-center items-center gap-6">
+    <div class="w-full flex flex-row justify-center items-center gap-8">
         <NavIcon icon="lucide:home" text="Home" />
         <NavIcon icon="lucide:clipboard" text="Card" />
         <NavIcon icon="lucide:camera" text="Camera" />

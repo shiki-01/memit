@@ -2,7 +2,7 @@
     import type { Canvas } from "$lib/types";
     import Color from "$lib/utils/colors";
     import { draggable } from "$lib/utils/actions";
-    import { bgpos, status } from "$lib/utils/interface";
+    import { bgpos, bgscale, status } from "$lib/utils/interface";
 
     export let canvas: Canvas | null = null;
 
@@ -39,14 +39,15 @@
 {#if canvas}
     <canvas
         bind:this={canvasEl}
-        {width} {height}
+        width={width + $bgscale}
+        height={height + $bgscale}
         class="absolute cursor-grab z-10"
         style="
             top: {y}px;
             left: {x}px;
-            width: {width}px;
+            width: {width + $bgscale}px;
             background: { Color(backgroundColor, 'background', 'light') };
-            transition: width 0.5s, height 0.5s;
+            
         "
         use:draggable={canvas.position}
         on:click={() => {
