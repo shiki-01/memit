@@ -27,8 +27,8 @@
 
     $: if (canvas) {
         ({ width, height } = canvas.size);
-        let baseX = $bgpos.x;
-        let baseY = $bgpos.y;
+        let baseX = $bgpos.x * $bgscale;
+        let baseY = $bgpos.y * $bgscale;
         canvas.position.subscribe(({ x: dx, y: dy }) => {
             x = baseX + dx;
             y = baseY + dy;
@@ -39,15 +39,14 @@
 {#if canvas}
     <canvas
         bind:this={canvasEl}
-        width={width + $bgscale}
-        height={height + $bgscale}
+        width={width}
+        height={height}
         class="absolute cursor-grab z-10"
         style="
             top: {y}px;
             left: {x}px;
-            width: {width + $bgscale}px;
             background: { Color(backgroundColor, 'background', 'light') };
-            
+            transform: scale({$bgscale});
         "
         use:draggable={canvas.position}
         on:click={() => {

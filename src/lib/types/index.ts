@@ -5,6 +5,11 @@ type Position = {
     y: number;
 }
 
+type Size = {
+    width: number;
+    height: number;
+}
+
 interface Vector {
     path: Position[];
     style: {
@@ -45,4 +50,4 @@ type ColorPalette = {
     };
 };
 
-export type { Position, Vector, Canvas, Color, UI, Theme, ColorPalette };
+export type { Position, Size, Vector, Canvas, Color, UI, Theme, ColorPalette };

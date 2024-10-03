@@ -1,52 +1,30 @@
-import { writable, type Writable } from 'svelte/store';
-import type { Position } from '$lib/types';
-import { bgscale } from './interface';
+import { bgscale, uisize } from './interface';
 import type { PinchCustomEvent } from 'svelte-gestures';
 
-export const pos = writable({x: 0, y: 0})
-const returnMousePosition = (e: PointerEvent) => {
-    pos.set({x: e.clientX, y: e.clientY})
-    return {
-        x: e.clientX,
-        y: e.clientY
-    } as Position;
-}
+const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
+    let before = 0;
+    if (typeof window === 'undefined') return;
 
-const handlePointerMove = (e: PointerEvent, store: Writable<Position> | Position) => {
-    if (typeof window !== 'undefined') {
-        if ('set' in store) {
-            let x = e.clientX;
-            let y = e.clientY;
-            (store as Writable<Position>).set({x,y});
-        } else {
-            return returnMousePosition(e);
-        }
+    let [width, height] = [0, 0];
+    uisize.subscribe(value => {
+        width = value.width;
+        height = value.height;
+    });
+
+    const minScale = Math.max(width, height) / 10000;
+
+    if ('deltaY' in e) {
+        bgscale.update(v => {
+            const value = v + e.deltaY / 10000;
+            return value > minScale ? value : minScale;
+        });
+    } else {
+        bgscale.update(v => {
+            const newScale = v + e.detail.scale - before - 1;
+            before = e.detail.scale;
+            return newScale > minScale ? newScale : minScale;
+        });
     }
 }
 
-const handlePointerUp = (store: Writable<Position> | Position) => {
-    if (typeof window !== 'undefined') {
-        window.removeEventListener('pointermove', handlePointerMoveWrapper(store));
-        window.removeEventListener('pointerup', handlePointerUpWrapper(store));
-    }
-}
-
-const handlePointerDown = (store: Writable<Position> | Position) => {
-    if (typeof window !== 'undefined') {
-        window.addEventListener('pointermove', handlePointerMoveWrapper(store));
-        window.addEventListener('pointerup', handlePointerUpWrapper(store));
-    }
-}
-
-const handlePinch = (e: PinchCustomEvent) => {
-    let before = 0
-    if (typeof window !== 'undefined') {
-        bgscale.update(v => v + e.detail.scale - before - 1)
-        before = e.detail.scale
-    }
-}
-
-const handlePointerMoveWrapper = (store: Writable<Position> | Position) => (e: PointerEvent) => handlePointerMove(e, store);
-const handlePointerUpWrapper = (store: Writable<Position> | Position) => () => handlePointerUp(store);
-
-export { returnMousePosition, handlePointerMove, handlePointerUp, handlePointerDown, handlePinch };
+export { handlePinch };

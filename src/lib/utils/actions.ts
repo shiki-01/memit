@@ -24,10 +24,8 @@ const draggable = (node: HTMLElement, params: Writable<Position>) => {
     }
 
     const handlePointerUp = (event: PointerEvent) => {
-        console.log(event.button)
         if (event.button !== 0) return;
         isDragging = false;
-        console.log('up')
         node.releasePointerCapture(event.pointerId);
         node.style.cursor = 'grab';
     }
