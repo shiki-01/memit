@@ -1,73 +1,66 @@
 <script lang="ts">
-    import type { Canvas } from "$lib/types";
-    import Color from "$lib/utils/colors";
-    import { draggable } from "$lib/utils/actions";
-    import { bgpos, bgscale, status } from "$lib/utils/interface";
+	import { tap } from 'svelte-gestures';
+	import type { Canvas } from '$lib/types';
+	import Color from '$lib/utils/colors';
+	import { draggable } from '$lib/utils/actions';
+	import { bgpos, bgscale, status } from '$lib/utils/interface';
 
-    export let canvas: Canvas | null = null;
+	export let canvas: Canvas | null = null;
 
-    let { width, height } = canvas?.size || { width: 150, height: 100 };
-    let x = 100, y = 100;
-    let { background, backgroundColor } = canvas?.style || { background: 'none', backgroundColor: 'stone'} as Canvas['style']
-    let text = canvas?.data?.text || '';
+	let { width, height } = canvas?.size || { width: 150, height: 100 };
+	let x = 100, y = 100;
+	let { background, backgroundColor } = canvas?.style || {
+		background: 'none',
+		backgroundColor: 'stone'
+	} as Canvas['style'];
+	let text = canvas?.data?.text || '';
 
-    let canvasEl: HTMLCanvasElement | null = null;
+	let canvasEl: HTMLCanvasElement | null = null;
+	let isTap = false;
 
-    $: if (canvasEl) {
-        let ctx = canvasEl.getContext('2d');
-        if (ctx) {
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = Color(backgroundColor, 'background', 'light');
-            ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = Color('stone', 'text', 'light');
-            ctx.font = '20px sans-serif';
-            ctx.fillText(text, 10, 20);
-        }
-    }
+	$: if (canvasEl) {
+		let ctx = canvasEl.getContext('2d');
+		if (ctx) {
+			ctx.clearRect(0, 0, width, height);
+			ctx.fillStyle = Color(backgroundColor, 'background', 'light');
+			ctx.fillRect(0, 0, width, height);
+			ctx.fillStyle = Color('stone', 'text', 'light');
+			ctx.font = '20px sans-serif';
+			text = x + ', ' + y + ', \n' + x*$bgscale + ', ' + y*$bgscale;
+			ctx.fillText(text, 10, 20);
+		}
+	}
 
-    $: if (canvas) {
-        ({ width, height } = canvas.size);
-        let baseX = $bgpos.x * $bgscale;
-        let baseY = $bgpos.y * $bgscale;
-        canvas.position.subscribe(({ x: dx, y: dy }) => {
-            x = baseX + dx;
-            y = baseY + dy;
-        });
-    }
+	$: if (canvas) {
+		({ width, height } = canvas.size);
+		canvas.position.subscribe(({ x: dx, y: dy }) => {
+			x = dx;
+			y = dy;
+		});
+	}
 </script>
 
 {#if canvas}
-    <canvas
-        bind:this={canvasEl}
-        width={width}
-        height={height}
-        class="absolute cursor-grab z-10"
-        style="
-            top: {y}px;
-            left: {x}px;
-            background: { Color(backgroundColor, 'background', 'light') };
-            transform: scale({$bgscale});
-        "
-        use:draggable={canvas.position}
-        on:click={() => {
-            if (!canvasEl) return;
-            if ($status) {
-                const style = canvasEl.style;
-                style.width = '100vw';
-                style.height = '100vh';
-                style.objectFit = 'cover';
-                style.top = '0';
-                style.left = '0';
-                status.set(null);
-            } else {
-                const style = canvasEl.style;
-                style.width = '100%';
-                style.objectFit = 'contain';
-                style.top = '50%';
-                style.left = '50%';
-                style.transform = 'translate(-50%, -50%)';
-                status.set(canvas)
-            }
-        }}
-    />
+	<canvas
+		bind:this={canvasEl}
+		width={width}
+		height={height}
+		class="absolute cursor-grab z-10"
+		style="
+      top: {y * $bgscale}px;
+      left: {x * $bgscale}px;
+      background: { Color(backgroundColor, 'background', 'light') };
+      transform: scale({$bgscale});
+    "
+		use:draggable={canvas.position}
+		use:tap
+		on:tap={() => isTap = !isTap}
+		on:click={(e) => {
+      if (!canvasEl || !isTap) return;
+      if (!$status && e.button === 0) {
+        status.set(canvas)
+        isTap = false;
+      }
+    }}
+	/>
 {/if}

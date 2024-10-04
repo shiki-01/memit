@@ -45,7 +45,7 @@
 
 	const size = (v: Size) => {
 		uisize.set(v);
-	}
+	};
 
 	$: {
 		const scaledWidth = $bgsize.width * $bgscale;
@@ -59,7 +59,7 @@
 		$bgpos.y = Math.max(-maxMoveY, Math.min(maxMoveY, $bgpos.y));
 	}
 
-	$: console.log($bgscale)
+	$: console.log($bgscale);
 
 	onMount(() => {
 		if (typeof window !== 'undefined') {
@@ -78,29 +78,38 @@
 		style="top: {$menupos.y}px; left: {$menupos.x}px"
 	/>
 	<div
-		class="absolute touch-none"
+		class="w-full h-full relative touch-none"
 		style="
-				background: { Color('teal','background','light') };
-				top: calc(50% + {$bgpos.y}px);
-				left: calc(50% + {$bgpos.x}px);
-				width: {$bgsize.width * $bgscale}px;
-				height: {$bgsize.height * $bgscale}px;
-				transform: translate(-50%, -50%);
+			background: { Color('teal','background','light') };
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
 		"
-		on:wheel={handlePinch}
 	>
 		{#if $status}
 			<Canvas canvas={$status} />
 		{:else}
 			<div
-				class="w-full h-full -z-10"
-				use:draggable={bgpos}
-				use:pinch
-				on:pinch={handlePinch}
-			/>
-			{#each canvaces as canvas}
-				<CanvasCard {canvas} />
-			{/each}
+				class="absolute touch-none"
+				style="
+					top: calc(50% + {$bgpos.y}px);
+					left: calc(50% + {$bgpos.x}px);
+					width: {$bgsize.width * $bgscale}px;
+					height: {$bgsize.height * $bgscale}px;
+					transform: translate(-50%, -50%);
+				"
+				on:wheel={handlePinch}
+			>
+				<div
+					class="w-full h-full -z-10"
+					use:draggable={bgpos}
+					use:pinch
+					on:pinch={handlePinch}
+				/>
+				{#each canvaces as canvas}
+					<CanvasCard {canvas} />
+				{/each}
+			</div>
 		{/if}
 	</div>
 </main>
