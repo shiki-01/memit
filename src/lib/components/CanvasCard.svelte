@@ -38,6 +38,7 @@
 			y = dy;
 		});
 	}
+
 </script>
 
 {#if canvas}
@@ -47,10 +48,9 @@
 		height={height}
 		class="absolute cursor-grab z-10"
 		style="
-      top: {y * $bgscale}px;
-      left: {x * $bgscale}px;
+      top: {y}px;
+      left: {x}px;
       background: { Color(backgroundColor, 'background', 'light') };
-      transform: scale({$bgscale});
     "
 		use:draggable={canvas.position}
 		use:tap

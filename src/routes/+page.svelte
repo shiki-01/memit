@@ -4,7 +4,7 @@
 	import NavBar from '$lib/components/NavBar.svelte';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import CanvasCard from '$lib/components/CanvasCard.svelte';
-	import { menupos, uisize, bgpos, bgsize, bgscale, status } from '$lib/utils/interface';
+	import { menupos, uisize, bgpos, bgsize, bgscale, pinchPos, status } from '$lib/utils/interface';
 	import type { Canvas as CanvasType, Size } from '$lib/types';
 	import { writable } from 'svelte/store';
 	import { pinch } from 'svelte-gestures';
@@ -47,6 +47,11 @@
 		uisize.set(v);
 	};
 
+	const pinched = (e: MouseEvent) => {
+		const { clientX, clientY }: { clientX: number, clientY: number } = e;
+		pinchPos.set({ x: clientX, y: clientY });
+	};
+
 	$: {
 		const scaledWidth = $bgsize.width * $bgscale;
 		const scaledHeight = $bgsize.height * $bgscale;
@@ -68,7 +73,10 @@
 	});
 </script>
 
-<svelte:window on:resize={() => size({ width: window.innerWidth, height: window.innerHeight })} />
+<svelte:window
+	on:resize={() => size({ width: window.innerWidth, height: window.innerHeight })}
+	on:wheel={pinched}
+/>
 
 <main
 	class="w-[100svw] relative h-[100svh] overflow-hidden"
@@ -94,9 +102,9 @@
 				style="
 					top: calc(50% + {$bgpos.y}px);
 					left: calc(50% + {$bgpos.x}px);
-					width: {$bgsize.width * $bgscale}px;
-					height: {$bgsize.height * $bgscale}px;
-					transform: translate(-50%, -50%);
+					width: {$bgsize.width}px;
+					height: {$bgsize.height}px;
+					transform: translate(-50%, -50%) scale({$bgscale});
 				"
 				on:wheel={handlePinch}
 			>

@@ -1,4 +1,4 @@
-import { bgscale, uisize } from './interface';
+import { bgscale, bgpos, pinchPos, uisize } from './interface';
 import type { PinchCustomEvent } from 'svelte-gestures';
 
 const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
@@ -10,6 +10,8 @@ const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
 		width = value.width;
 		height = value.height;
 	});
+
+	let [bgClientX, bgClientY] = [0, 0];
 
 	const minScale = Math.max(width, height) / 10000;
 
