@@ -52,7 +52,7 @@
       left: {x}px;
       background: { Color(backgroundColor, 'background', 'light') };
     "
-		use:draggable={canvas.position}
+		use:draggable={{ params: canvas.position }}
 		use:tap
 		on:tap={() => isTap = !isTap}
 		on:click={(e) => {

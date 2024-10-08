@@ -11,22 +11,34 @@ const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
 		height = value.height;
 	});
 
-	let [bgClientX, bgClientY] = [0, 0];
-
 	const minScale = Math.max(width, height) / 10000;
 
+	let centerX: number, centerY: number;
+	let scaleDelta: number;
+
 	if ('deltaY' in e) {
-		bgscale.update(v => {
-			const value = v + e.deltaY * -1 / 10000;
-			return value > minScale ? value : minScale;
-		});
+		centerX = e.clientX;
+		centerY = e.clientY;
+		scaleDelta = e.deltaY * -1 / 10000;
 	} else {
-		bgscale.update(v => {
-			const newScale = v + e.detail.scale - before - 1;
-			before = e.detail.scale;
-			return newScale > minScale ? newScale : minScale;
-		});
+		centerX = e.detail.center.x;
+		centerY = e.detail.center.y;
+		scaleDelta = e.detail.scale * -1;
 	}
+
+	bgscale.update(currentScale => {
+		const newScale = Math.max(currentScale + scaleDelta, minScale);
+
+		bgpos.update(currentPos => {
+			const scaleRatio = newScale / currentScale;
+			return {
+				x: centerX - (centerX - currentPos.x) * scaleRatio,
+				y: centerY - (centerY - currentPos.y) * scaleRatio
+			};
+		});
+
+		return newScale;
+	});
 };
 
 export { handlePinch };

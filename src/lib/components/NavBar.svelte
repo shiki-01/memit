@@ -32,7 +32,7 @@
 >
 	<button
 		class="cursor-grab"
-		use:draggable={menupos}
+		use:draggable={{ params: menupos, strict: true }}
 	>
 		<Icon icon="lucide:grip-horizontal" />
 	</button>

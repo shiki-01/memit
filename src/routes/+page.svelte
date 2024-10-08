@@ -110,7 +110,7 @@
 			>
 				<div
 					class="w-full h-full -z-10"
-					use:draggable={bgpos}
+					use:draggable={{ params: bgpos, strict: true }}
 					use:pinch
 					on:pinch={handlePinch}
 				/>
