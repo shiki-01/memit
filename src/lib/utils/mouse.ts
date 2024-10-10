@@ -1,9 +1,10 @@
-import { bgscale, bgpos, pinchPos, uisize } from './interface';
+import { bgscale, bgpos, uisize } from './interface';
 import type { PinchCustomEvent } from 'svelte-gestures';
 
 const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
-	let before = 0;
 	if (typeof window === 'undefined') return;
+
+	let before = 0;
 
 	let [width, height] = [0, 0];
 	uisize.subscribe(value => {
@@ -23,11 +24,14 @@ const handlePinch = (e: PinchCustomEvent | WheelEvent) => {
 	} else {
 		centerX = e.detail.center.x;
 		centerY = e.detail.center.y;
-		scaleDelta = e.detail.scale * -1;
+		scaleDelta = (e.detail.scale - before - 1) * 0.05;
+		before = e.detail.scale;
 	}
 
 	bgscale.update(currentScale => {
 		const newScale = Math.max(currentScale + scaleDelta, minScale);
+
+		console.log(newScale);
 
 		bgpos.update(currentPos => {
 			const scaleRatio = newScale / currentScale;

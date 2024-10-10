@@ -64,8 +64,6 @@
 		$bgpos.y = Math.max(-maxMoveY, Math.min(maxMoveY, $bgpos.y));
 	}
 
-	$: console.log($bgscale);
-
 	onMount(() => {
 		if (typeof window !== 'undefined') {
 			size({ width: window.innerWidth, height: window.innerHeight });
