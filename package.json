@@ -34,8 +34,11 @@
 	"type": "module",
 	"dependencies": {
 		"@iconify/svelte": "^4.0.2",
+		"ef-infinite-canvas": "^0.6.7",
+		"infinite-viewer": "^0.29.1",
 		"svelte-dnd-action": "^0.9.51",
 		"svelte-gesture": "^0.1.4",
-		"svelte-gestures": "^5.0.4"
+		"svelte-gestures": "^5.0.4",
+		"svelte-infinite-viewer": "^0.27.1"
 	}
 }

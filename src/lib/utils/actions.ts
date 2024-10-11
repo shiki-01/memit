@@ -1,6 +1,6 @@
 import type { Writable } from 'svelte/store';
 import type { Position } from '$lib/types';
-import { bgscale } from '$lib/utils/interface';
+import { bgscale, isDragging } from '$lib/utils/interface';
 
 const draggable = (node: HTMLElement, { params, strict = false }: { params: Writable<Position>, strict?: boolean }) => {
 	let position: Position;
@@ -9,12 +9,11 @@ const draggable = (node: HTMLElement, { params, strict = false }: { params: Writ
 	params.subscribe(value => position = value);
 	bgscale.subscribe(value => scale = value);
 
-	let isDragging: boolean = false;
 	let startX: number, startY: number;
 
 	const handlePointerDown = (event: PointerEvent) => {
 		if (event.button !== 0) return;
-		isDragging = true;
+		isDragging.set(true);
 		startX = strict ? event.clientX - position.x : (event.clientX - position.x * scale) / scale;
 		startY = strict ? event.clientY - position.y : (event.clientY - position.y * scale) / scale;
 		node.setPointerCapture(event.pointerId);
@@ -22,7 +21,9 @@ const draggable = (node: HTMLElement, { params, strict = false }: { params: Writ
 	};
 
 	const handlePointerMove = (event: PointerEvent) => {
-		if (!isDragging) return;
+		let is = false;
+		isDragging.subscribe(isd => is = isd)
+		if (!is) return;
 		params.set({
 			x: strict ? event.clientX - startX : event.clientX / scale - startX,
 			y: strict ? event.clientY - startY : event.clientY / scale - startY
@@ -31,7 +32,7 @@ const draggable = (node: HTMLElement, { params, strict = false }: { params: Writ
 
 	const handlePointerUp = (event: PointerEvent) => {
 		if (event.button !== 0) return;
-		isDragging = false;
+		isDragging.set(false);
 		node.releasePointerCapture(event.pointerId);
 		node.style.cursor = 'grab';
 	};

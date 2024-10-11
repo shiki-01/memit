@@ -4,10 +4,9 @@
 	import NavBar from '$lib/components/NavBar.svelte';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import CanvasCard from '$lib/components/CanvasCard.svelte';
-	import { menupos, uisize, bgpos, bgsize, bgscale, pinchPos, status } from '$lib/utils/interface';
+	import { menupos, uisize, bgpos, bgsize, bgscale, isDragging, pinchPos, status } from '$lib/utils/interface';
 	import type { Canvas as CanvasType, Size } from '$lib/types';
 	import { writable } from 'svelte/store';
-	import { pinch } from 'svelte-gestures';
 	import { draggable } from '$lib/utils/actions';
 	import { handlePinch } from '$lib/utils/mouse';
 	import { onMount } from 'svelte';
@@ -48,9 +47,28 @@
 	};
 
 	const pinched = (e: MouseEvent) => {
-		const { clientX, clientY }: { clientX: number, clientY: number } = e;
+		const { clientX, clientY }: { clientX: number; clientY: number } = e;
 		pinchPos.set({ x: clientX, y: clientY });
 	};
+
+	import InfiniteViewer from 'svelte-infinite-viewer';
+
+	let viewer: InfiniteViewer | null = null;
+	let viewport: HTMLDivElement | null = null;
+
+	$: if (viewer) {
+		let x: number = 0, y: number = 0;
+
+		viewer.setZoom($bgscale)
+		viewer.setTo({x: 0, y: 0})
+
+		if ($isDragging) {
+			viewer.setTo({x,y})
+		} else {
+			x = viewer.getScrollLeft();
+			y = viewer.getScrollTop();
+		}
+	}
 
 	$: {
 		const scaledWidth = $bgsize.width * $bgscale;
@@ -69,6 +87,9 @@
 			size({ width: window.innerWidth, height: window.innerHeight });
 		}
 	});
+
+	let before = 0;
+	let test = ''
 </script>
 
 <svelte:window
@@ -76,17 +97,12 @@
 	on:wheel={pinched}
 />
 
-<main
-	class="w-[100svw] relative h-[100svh] overflow-hidden"
->
-	<NavBar
-		class="absolute z-20"
-		style="top: {$menupos.y}px; left: {$menupos.x}px"
-	/>
+<main class="w-[100svw] relative h-[100svh] overflow-hidden">
+	<NavBar class="absolute z-20" style="top: {$menupos.y}px; left: {$menupos.x}px" />
 	<div
 		class="w-full h-full relative touch-none"
 		style="
-			background: { Color('teal','background','light') };
+			background: {Color('teal', 'background', 'light')};
 			top: 50%;
 			left: 50%;
 			transform: translate(-50%, -50%);
@@ -95,27 +111,44 @@
 		{#if $status}
 			<Canvas canvas={$status} />
 		{:else}
-			<div
-				class="absolute touch-none"
-				style="
-					top: calc(50% + {$bgpos.y}px);
-					left: calc(50% + {$bgpos.x}px);
-					width: {$bgsize.width}px;
-					height: {$bgsize.height}px;
-					transform: translate(-50%, -50%) scale({$bgscale});
-				"
-				on:wheel={handlePinch}
-			>
+			<InfiniteViewer
+			bind:this={viewer}
+				className="viewer"
+				margin={0}
+				threshold={0}
+				rangeX={[0, $bgsize.width]}
+				rangeY={[0, $bgsize.height]}
+				on:pinchStart={() => before = 1}
+				on:pinch={(e) => {
+					handlePinch(e,before)
+					before = e.detail.scale
+					test = (e.detail.scale / 10 - 0).toString()
+				}}
+			>{$isDragging}
 				<div
+					class="viewport"
+					style="
+				"
+				>
+					<!--<div
 					class="w-full h-full -z-10"
 					use:draggable={{ params: bgpos, strict: true }}
 					use:pinch
 					on:pinch={handlePinch}
-				/>
-				{#each canvaces as canvas}
-					<CanvasCard {canvas} />
-				{/each}
-			</div>
+				/>-->
+					{#each canvaces as canvas}
+						<CanvasCard {canvas} />
+					{/each}
+				</div>
+			</InfiniteViewer>
 		{/if}
 	</div>
 </main>
+
+<style>
+	:global(.viewer) {
+		width: 100%;
+		height: 100%;
+		position: relative;
+	}
+</style>
