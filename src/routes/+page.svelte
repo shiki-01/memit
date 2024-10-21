@@ -20,7 +20,7 @@
 	import { handlePinch } from '$lib/utils/mouse';
 	import { onMount } from 'svelte';
 
-	const position = writable({ x: 200, y: 100 });
+	const position1 = writable({ x: 200, y: 100 });
 	const position2 = writable({ x: 500, y: 100 });
 
 	const canvaces: CanvasType[] = [
@@ -29,7 +29,7 @@
 				width: 200,
 				height: 150
 			},
-			position,
+			position: position1,
 			style: {
 				background: 'none',
 				backgroundColor: 'stone'
@@ -61,69 +61,92 @@
 	};
 
 	import InfiniteViewer from 'svelte-infinite-viewer';
-	import { createGesture, dragAction, pinchAction } from '@use-gesture/vanilla';
-	import { spring, type Spring } from 'svelte/motion';
+	import { createGesture, dragAction, pinchAction, wheelAction, DragGesture, PinchGesture } from '@use-gesture/vanilla';
+	import { spring } from 'svelte/motion';
 
-	let element: HTMLElement | null = null;
-	let scale = spring(1);
-	let positionn = spring({ x: 0, y: 0 });
+	let canvas: HTMLDivElement;
+	let cards: HTMLDivElement[] = [];
+	let scale = 1;
+	let x = 0;
+	let y = 0;
 
-	const gesture = createGesture([dragAction, pinchAction]);
+	const MIN_SCALE = 0.5;
+	const MAX_SCALE = 3;
+	const SCALE_SENSITIVITY = 0.0005;
 
-	$: minScale = Math.max($uisize.width / $bgsize.width, $uisize.height / $bgsize.height);
-
-	function ensureBounds(pos: { x: number; y: number }, scl: number) {
-		const maxX = Math.max(0, $uisize.width - $bgsize.width * scl);
-		const maxY = Math.max(0, $uisize.height - $bgsize.height * scl);
-		test = JSON.stringify(pos) + ' ' + maxX.toString() + ' ' + maxY.toString();
-		return {
-			x: Math.min(Math.max(pos.x, maxX), 0),
-			y: Math.min(Math.max(pos.y, maxY), 0)
-		};
-	}
-
-	function adjustPositionForPinch(
-		pos: { x: number; y: number },
-		oldScale: number,
-		newScale: number,
-		center: { x: number; y: number }
-	) {
-		const scaleRatio = newScale / oldScale;
-		return {
-			x: center.x - (center.x - pos.x) * scaleRatio,
-			y: center.y - (center.y - pos.y) * scaleRatio
-		};
-	}
-
-	function handleGestures(element: HTMLElement) {
-		if (!element) return;
-		const gestureHandler = gesture(
-			element,
-			{
-				onDrag: ({ offset: [x, y] }) => {
-					const newPosition = ensureBounds({ x, y }, $scale);
-					positionn.set(newPosition);
-					//test = newPosition.x.toString() + ' ' + newPosition.y.toString();
-				},
-				onPinch: ({ offset: [d], origin: [ox, oy] }) => {
-					const newScale = Math.max(minScale, d)
-					const center = { x: ox, y: oy };
-					const newPosition = adjustPositionForPinch($positionn, $scale, newScale, center);
-					scale.set(newScale);
-					positionn.set(ensureBounds(newPosition, newScale));
-				}
-			},
-			{
-				drag: { from: () => [$positionn.x, $positionn.y] },
-				pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true }
+	onMount(() => {
+		const dragGesture = new DragGesture(
+			canvas,
+			({ movement: [mx, my], offset: [ox, oy] }) => {
+				x = ox;
+				y = oy;
+				updateCanvasPosition();
 			}
 		);
 
-		return {
-			destroy() {
-				gestureHandler.destroy();
+		const pinchGesture = new PinchGesture(
+			canvas,
+			({ origin: [ox, oy], offset: [s], movement: [ms], event }) => {
+				scale = clamp(s, MIN_SCALE, MAX_SCALE);
+				updateCanvasPosition(ox, oy);
 			}
+		);
+
+		window.addEventListener('wheel', onWheel, { passive: false });
+
+		return () => {
+			dragGesture.destroy();
+			pinchGesture.destroy();
+			window.removeEventListener('wheel', onWheel);
 		};
+	});
+
+	function onWheel(event: WheelEvent) {
+		event.preventDefault();
+		const delta = -event.deltaY * SCALE_SENSITIVITY;
+		const newScale = clamp(scale * (1 + delta), MIN_SCALE, MAX_SCALE);
+
+		if (newScale !== scale) {
+			scale = newScale;
+			updateCanvasPosition(event.clientX, event.clientY);
+		}
+	}
+
+	function updateCanvasPosition(originX?: number, originY?: number) {
+		const windowWidth = window.innerWidth;
+		const windowHeight = window.innerHeight;
+		const canvasWidth = canvas.offsetWidth;
+		const canvasHeight = canvas.offsetHeight;
+
+		const scaledWidth = canvasWidth * scale;
+		const scaledHeight = canvasHeight * scale;
+
+		if (originX !== undefined && originY !== undefined) {
+			const dx = (originX - windowWidth / 2) * (scale - 1);
+			const dy = (originY - windowHeight / 2) * (scale - 1);
+			x -= dx;
+			y -= dy;
+		}
+
+		if (scaledWidth < windowWidth) {
+			x = (windowWidth - scaledWidth) / 2;
+		} else {
+			// キャンバスが画面より大きい場合、端が見えないようにする
+			const minX = windowWidth - scaledWidth;
+			x = clamp(x, minX, 0);
+		}
+
+		if (scaledHeight < windowHeight) {
+			y = (windowHeight - scaledHeight) / 2;
+		} else {
+			const minY = windowHeight - scaledHeight;
+			y = clamp(y, minY, 0);
+		}
+		canvas.style.transform = `translate(${x}px, ${y}px)`;
+	}
+
+	function clamp(value: number, min: number, max: number): number {
+		return Math.min(Math.max(value, min), max);
 	}
 
 	let viewer: InfiniteViewer | null = null;
@@ -197,20 +220,15 @@
 					before = e.detail.scale
 					test = (e.detail.scale / 10 - 0).toString()
 				}}
->-->{$positionn.x}
-			{$positionn.y}
-			{$scale}
-			{test}
+>--><div class="fixed z-50">
+		</div>
 			<div
-				bind:this={element}
-				use:handleGestures
 				style="
 				    position: relative;
-				    background: red;
-				    width: {$bgsize.width}px;
-					height: {$bgsize.height}px;
-				    transform: translate({$positionn.x}px, {$positionn.y}px) scale({$scale});
-					
+				    width: 100%;
+				    height: 100%;
+				    touch-action: none;
+				    scale: {scale};
 				"
 			>
 				<div
@@ -224,9 +242,23 @@
 					use:pinch
 					on:pinch={handlePinch}
 				/>-->
-					{#each canvaces as canvas}
-						<CanvasCard {canvas} />
-					{/each}
+					<div
+						bind:this={canvas}
+						style="
+						border: 10px solid black;
+						background: red;
+							width: {$bgsize.width}px;
+							height: {$bgsize.height}px;
+							top: 50%;
+							left: 50%;
+							transform-origin: center center;
+							touch-action: none;
+						"
+					>
+						{#each canvaces as canvas}
+							<CanvasCard {canvas} />
+						{/each}
+					</div>
 				</div>
 			</div>
 			<!--</InfiniteViewer>-->
@@ -235,9 +267,9 @@
 </main>
 
 <style>
-	:global(.viewer) {
-		width: 100%;
-		height: 100%;
-		position: relative;
-	}
+    :global(.viewer) {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
 </style>
