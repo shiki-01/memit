@@ -16,8 +16,6 @@
 	} from '$lib/utils/interface';
 	import type { Canvas as CanvasType, Size } from '$lib/types';
 	import { writable } from 'svelte/store';
-	import { draggable } from '$lib/utils/actions';
-	import { handlePinch } from '$lib/utils/mouse';
 	import { onMount } from 'svelte';
 
 	const position1 = writable({ x: 200, y: 100 });
@@ -55,136 +53,14 @@
 		uisize.set(v);
 	};
 
-	const pinched = (e: MouseEvent) => {
-		const { clientX, clientY }: { clientX: number; clientY: number } = e;
-		pinchPos.set({ x: clientX, y: clientY });
-	};
-
-	import InfiniteViewer from 'svelte-infinite-viewer';
-	import { createGesture, dragAction, pinchAction, wheelAction, DragGesture, PinchGesture } from '@use-gesture/vanilla';
-	import { spring } from 'svelte/motion';
-
-	let canvas: HTMLDivElement;
-	let cards: HTMLDivElement[] = [];
-	let scale = 1;
-	let x = 0;
-	let y = 0;
-
-	const MIN_SCALE = 0.5;
-	const MAX_SCALE = 3;
-	const SCALE_SENSITIVITY = 0.0005;
-
 	onMount(() => {
-		const dragGesture = new DragGesture(
-			canvas,
-			({ movement: [mx, my], offset: [ox, oy] }) => {
-				x = ox;
-				y = oy;
-				updateCanvasPosition();
-			}
-		);
-
-		const pinchGesture = new PinchGesture(
-			canvas,
-			({ origin: [ox, oy], offset: [s], movement: [ms], event }) => {
-				scale = clamp(s, MIN_SCALE, MAX_SCALE);
-				updateCanvasPosition(ox, oy);
-			}
-		);
-
-		window.addEventListener('wheel', onWheel, { passive: false });
-
-		return () => {
-			dragGesture.destroy();
-			pinchGesture.destroy();
-			window.removeEventListener('wheel', onWheel);
-		};
+		if (typeof window === 'undefined') return;
+		size({ width: window.innerWidth, height: window.innerHeight });
 	});
 
-	function onWheel(event: WheelEvent) {
-		event.preventDefault();
-		const delta = -event.deltaY * SCALE_SENSITIVITY;
-		const newScale = clamp(scale * (1 + delta), MIN_SCALE, MAX_SCALE);
+	import Moveable from 'svelte-moveable';
 
-		if (newScale !== scale) {
-			scale = newScale;
-			updateCanvasPosition(event.clientX, event.clientY);
-		}
-	}
-
-	function updateCanvasPosition(originX?: number, originY?: number) {
-		const windowWidth = window.innerWidth;
-		const windowHeight = window.innerHeight;
-		const canvasWidth = canvas.offsetWidth;
-		const canvasHeight = canvas.offsetHeight;
-
-		const scaledWidth = canvasWidth * scale;
-		const scaledHeight = canvasHeight * scale;
-
-		if (originX !== undefined && originY !== undefined) {
-			const dx = (originX - windowWidth / 2) * (scale - 1);
-			const dy = (originY - windowHeight / 2) * (scale - 1);
-			x -= dx;
-			y -= dy;
-		}
-
-		if (scaledWidth < windowWidth) {
-			x = (windowWidth - scaledWidth) / 2;
-		} else {
-			// キャンバスが画面より大きい場合、端が見えないようにする
-			const minX = windowWidth - scaledWidth;
-			x = clamp(x, minX, 0);
-		}
-
-		if (scaledHeight < windowHeight) {
-			y = (windowHeight - scaledHeight) / 2;
-		} else {
-			const minY = windowHeight - scaledHeight;
-			y = clamp(y, minY, 0);
-		}
-		canvas.style.transform = `translate(${x}px, ${y}px)`;
-	}
-
-	function clamp(value: number, min: number, max: number): number {
-		return Math.min(Math.max(value, min), max);
-	}
-
-	let viewer: InfiniteViewer | null = null;
-	let viewport: HTMLDivElement | null = null;
-
-	/**$: if (viewer) {
-		let x: number = 0, y: number = 0;
-
-		viewer.setZoom($bgscale)
-		viewer.setTo({x: 0, y: 0})
-
-		if ($isDragging) {
-			viewer.setTo({x,y})
-		} else {
-			x = viewer.getScrollLeft();
-			y = viewer.getScrollTop();
-		}
-	}**/
-
-	$: {
-		const scaledWidth = $bgsize.width * $bgscale;
-		const scaledHeight = $bgsize.height * $bgscale;
-
-		const maxMoveX = Math.max((scaledWidth - $uisize.width) / 2, 0);
-		const maxMoveY = Math.max((scaledHeight - $uisize.height) / 2, 0);
-
-		$bgpos.x = Math.max(-maxMoveX, Math.min(maxMoveX, $bgpos.x));
-
-		$bgpos.y = Math.max(-maxMoveY, Math.min(maxMoveY, $bgpos.y));
-	}
-
-	onMount(() => {
-		if (typeof window !== 'undefined') {
-			size({ width: window.innerWidth, height: window.innerHeight });
-		}
-	});
-
-	let before = 0;
+	let canvas: HTMLDivElement | null = null;
 	let test = '';
 </script>
 
@@ -204,64 +80,49 @@
 		{#if $status}
 			<Canvas canvas={$status} />
 		{:else}
-			<!--<InfiniteViewer
-			    bind:this={viewer}
-				className="viewer"
-				margin={0}
-				threshold={0}
-				rangeX={[0, $bgsize.width]}
-				rangeY={[0, $bgsize.height]}
-				useMouseDrag={true}
-				usePinch={true}
-				pinchThreshold={1}
-				on:pinchStart={() => before = 1}
-				on:pinch={(e) => {
-					handlePinch(e,before)
-					before = e.detail.scale
-					test = (e.detail.scale / 10 - 0).toString()
+			<Moveable
+				target={canvas}
+				draggable={true}
+				throttleDrag={1}
+				edgeDraggable={false}
+				on:drag={({ detail: e }) => {
+					if ($isDragging) return;
+					const [x, y] = e.translate;
+					const [width, height] = [$bgsize.width * $bgscale, $bgsize.height * $bgscale];
+					const max = {
+						x: {
+							min: width * -1,
+							max: ($bgsize.width - width) / -2
+						},
+						y: {
+							min: height * -1,
+							max: ($bgsize.height - height) / -2
+						}
+					}
+					const [tx, ty] = [Math.min(max.x.max, Math.max(max.x.min, x)), Math.min(max.y.max, Math.max(max.y.min, y))];
+					e.target.style.transform = `translate(${tx}px, ${ty}px)`;
 				}}
->--><div class="fixed z-50">
-		</div>
+			/>
 			<div
+				bind:this={canvas}
 				style="
-				    position: relative;
-				    width: 100%;
-				    height: 100%;
-				    touch-action: none;
-				    scale: {scale};
-				"
-			>
-				<div
-					class="viewport"
-					style="
-				"
-				>
-					<!--<div
-					class="w-full h-full -z-10"
-					use:draggable={{ params: bgpos, strict: true }}
-					use:pinch
-					on:pinch={handlePinch}
-				/>-->
-					<div
-						bind:this={canvas}
-						style="
-						border: 10px solid black;
-						background: red;
+				background: red;
 							width: {$bgsize.width}px;
 							height: {$bgsize.height}px;
-							top: 50%;
-							left: 50%;
 							transform-origin: center center;
 							touch-action: none;
+							scale: {$bgscale};
 						"
-					>
-						{#each canvaces as canvas}
-							<CanvasCard {canvas} />
-						{/each}
-					</div>
-				</div>
+				on:wheel={e => {
+					if (!canvas) return;
+					e.preventDefault();
+					$bgscale = $bgscale + e.deltaY * -1 / 1000;
+				}}
+			>
+				{#each canvaces as canvas}
+					<CanvasCard {canvas} />
+				{/each}
 			</div>
-			<!--</InfiniteViewer>-->
 		{/if}
 	</div>
 </main>

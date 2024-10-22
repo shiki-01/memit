@@ -41,6 +41,7 @@
 		"svelte-dnd-action": "^0.9.51",
 		"svelte-gesture": "^0.1.4",
 		"svelte-gestures": "^5.0.4",
-		"svelte-infinite-viewer": "^0.27.1"
+		"svelte-infinite-viewer": "^0.27.1",
+		"svelte-moveable": "^0.45.0"
 	}
 }
