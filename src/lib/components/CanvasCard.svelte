@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { tap } from 'svelte-gestures';
 	import type { Canvas } from '$lib/types';
 	import Color from '$lib/utils/colors';
-	import { draggable } from '$lib/utils/actions';
 	import { bgpos, bgscale, status } from '$lib/utils/interface';
+	import { draggable } from '@neodrag/svelte';
 
 	export let canvas: Canvas | null = null;
 
@@ -15,21 +14,8 @@
 	} as Canvas['style'];
 	let text = canvas?.data?.text || '';
 
-	let canvasEl: HTMLCanvasElement | null = null;
+	let canvasEl: HTMLDivElement | null = null;
 	let isTap = false;
-
-	$: if (canvasEl) {
-		let ctx = canvasEl.getContext('2d');
-		if (ctx) {
-			ctx.clearRect(0, 0, width, height);
-			ctx.fillStyle = Color(backgroundColor, 'background', 'light');
-			ctx.fillRect(0, 0, width, height);
-			ctx.fillStyle = Color('stone', 'text', 'light');
-			ctx.font = '20px sans-serif';
-			text = x + ', ' + y + ', \n' + x*$bgscale + ', ' + y*$bgscale;
-			ctx.fillText(text, 10, 20);
-		}
-	}
 
 	$: if (canvas) {
 		({ width, height } = canvas.size);
@@ -39,28 +25,54 @@
 		});
 	}
 
+	let dragging = { x: 0, y: 0 };
+
 </script>
 
 {#if canvas}
-	<canvas
-		bind:this={canvasEl}
-		width={width}
-		height={height}
-		class="absolute cursor-grab z-10"
+	<button
+		class="absolute cursor-grab z-10 {$$props.class}"
 		style="
+			width: {width}px;
+			height: {height}px;
       top: {y}px;
       left: {x}px;
       background: { Color(backgroundColor, 'background', 'light') };
     "
-		use:draggable={{ params: canvas.position }}
-		use:tap
-		on:tap={() => isTap = !isTap}
+		use:draggable={{
+			position: { x, y },
+			onDragStart: () => {
+				dragging = { x, y };
+			},
+			onDrag: ({ offsetX, offsetY }) => {
+				canvas.position.update((pos) => {
+					return {
+						x: pos.x + offsetX - dragging.x,
+						y: pos.y + offsetY - dragging.y
+					};
+				});
+				dragging = { x: offsetX, y: offsetY };
+			}
+		}}
 		on:click={(e) => {
-      if (!canvasEl || !isTap) return;
+      //if (!canvasEl || !isTap) return;
       if (!$status && e.button === 0) {
         status.set(canvas)
         isTap = false;
       }
     }}
-	/>
+	>
+		{#if background === 'none'}
+			{#if text}
+				<p class="text-sm text-stone">{text}</p>
+			{/if}
+		{:else}
+			<img
+				src={background}
+				alt={text}
+				class="w-full h-full object-cover"
+				style="background-size: {bgscale}; background-position: {bgpos};"
+			/>
+		{/if}
+	</button>
 {/if}

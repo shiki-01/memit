@@ -58,9 +58,10 @@
 		size({ width: window.innerWidth, height: window.innerHeight });
 	});
 
-	import Moveable from 'svelte-moveable';
+	import { draggable } from '@neodrag/svelte';
 
-	let canvas: HTMLDivElement | null = null;
+	let position = { x: 0, y: 0 };
+
 	let test = '';
 </script>
 
@@ -80,48 +81,60 @@
 		{#if $status}
 			<Canvas canvas={$status} />
 		{:else}
-			<Moveable
-				target={canvas}
-				draggable={true}
-				throttleDrag={1}
-				edgeDraggable={false}
-				on:drag={({ detail: e }) => {
-					if ($isDragging) return;
-					const [x, y] = e.translate;
-					const [width, height] = [$bgsize.width * $bgscale, $bgsize.height * $bgscale];
-					const max = {
-						x: {
-							min: width * -1,
-							max: ($bgsize.width - width) / -2
-						},
-						y: {
-							min: height * -1,
-							max: ($bgsize.height - height) / -2
-						}
-					}
-					const [tx, ty] = [Math.min(max.x.max, Math.max(max.x.min, x)), Math.min(max.y.max, Math.max(max.y.min, y))];
-					e.target.style.transform = `translate(${tx}px, ${ty}px)`;
-				}}
-			/>
 			<div
-				bind:this={canvas}
-				style="
-				background: red;
-							width: {$bgsize.width}px;
-							height: {$bgsize.height}px;
-							transform-origin: center center;
-							touch-action: none;
-							scale: {$bgscale};
-						"
-				on:wheel={e => {
-					if (!canvas) return;
-					e.preventDefault();
-					$bgscale = $bgscale + e.deltaY * -1 / 1000;
-				}}
+				class="w-screen h-screen"
 			>
-				{#each canvaces as canvas}
-					<CanvasCard {canvas} />
-				{/each}
+				<div
+					style="
+
+						width: {$bgsize.width}px;
+						height: {$bgsize.height}px;
+						transform-origin: top left;
+						touch-action: none;
+						scale: {$bgscale};
+					"
+					use:draggable={{
+						position,
+						cancel: '.card',
+						onDrag: ({ offsetX, offsetY }) => {
+							 const width = ($bgsize.width * $bgscale - $uisize.width) * -1;
+						 	 const height = ($bgsize.height * $bgscale - $uisize.height) * -1;
+							 const x = Math.min(0, Math.max(offsetX, width));
+							 const y = Math.min(0, Math.max(offsetY, height));
+						 	 position = { x, y };
+							 console.log(offsetX,offsetY,position);
+						}
+					}}
+					on:wheel={e => {
+						e.preventDefault();
+						const min = Math.max($uisize.width / $bgsize.width, $uisize.height / $bgsize.height);
+						const max = 2;
+						const oldScale = $bgscale;
+						const newScale = Math.min(max, Math.max(min, $bgscale + e.deltaY * -1 / 1000));
+						const scaleChange = newScale / oldScale;
+
+						const rect = e.currentTarget.getBoundingClientRect();
+						const offsetX = e.clientX - rect.left;
+						const offsetY = e.clientY - rect.top;
+						position = {
+							x: (position.x - offsetX) * scaleChange + offsetX,
+							y: (position.y - offsetY) * scaleChange + offsetY
+						};
+
+						const width = ($bgsize.width * newScale - $uisize.width) * -1;
+						const height = ($bgsize.height * newScale - $uisize.height) * -1;
+						position = {
+							x: Math.min(0, Math.max(position.x, width)),
+							y: Math.min(0, Math.max(position.y, height))
+						};
+
+						$bgscale = newScale;
+					}}
+				>
+					{#each canvaces as canvas}
+						<CanvasCard class="card" {canvas} />
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>
