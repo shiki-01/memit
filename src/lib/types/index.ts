@@ -30,7 +30,14 @@ interface Canvas {
         backgroundColor: Color;
     };
     data?: {
-        text?: string;
+        text?: {
+            content: string;
+            justify: 'center' | 'start' | 'end';
+            align: 'center' | 'start' | 'end';
+            color: Color;
+            size: number;
+            font: string;
+        };
         paint?: Vector[];
     }
     children?: Array<Canvas>;

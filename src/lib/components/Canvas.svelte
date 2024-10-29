@@ -3,6 +3,9 @@
 	import { status, uisize } from '$lib/utils/interface';
 	import Color from '$lib/utils/colors';
 	import { fly } from 'svelte/transition';
+	import type EditorJS from '@editorjs/editorjs';
+	import { onMount } from 'svelte';
+	import '$lib/styles/editor.scss'
 
 	export let canvas: Canvas | null = null;
 
@@ -14,9 +17,9 @@
 	let isDragging = true;
 	let { background, backgroundColor } =
 	canvas?.style || ({ background: 'none', backgroundColor: 'stone' } as Canvas['style']);
-	let text = canvas?.data?.text || '';
+	let text = canvas?.data?.text || null;
 
-	let canvasEl: HTMLCanvasElement | null = null;
+	let canvasEl: HTMLButtonElement | null = null;
 	let cardscale = Math.min($uisize.width / width, $uisize.height / height);
 
 	const transCSS = (is: boolean = false) => {
@@ -27,18 +30,6 @@
 			'height 0.5s'
 		].join(', ');
 	};
-
-	$: if (canvasEl) {
-		let ctx = canvasEl.getContext('2d');
-		if (ctx) {
-			ctx.clearRect(0, 0, width, height);
-			ctx.fillStyle = Color(backgroundColor, 'background', 'light');
-			ctx.fillRect(0, 0, width, height);
-			ctx.fillStyle = Color('stone', 'text', 'light');
-			ctx.font = '20px sans-serif';
-			ctx.fillText(text, 10, 20);
-		}
-	}
 
 	const handlePointerDown = (e: PointerEvent) => {
 		isDragging = true;
@@ -78,14 +69,57 @@
 			y = 0;
 		}
 	};
+
+	let isEditing = false;
+	let editor: EditorJS | null = null;
+
+	let editorJS: HTMLDivElement | null = null;
+
+	$: if (editor) {
+		editor.readOnly.toggle(isEditing);
+	}
+
+	onMount(async () => {
+		if (!editorJS) return;
+		const EditorJS = (await import('@editorjs/editorjs')).default;
+
+		const Header = (await import('@editorjs/header')).default;
+		const List = (await import('@editorjs/list')).default;
+
+		editor = new EditorJS({
+			holder: editorJS,
+			tools: {
+				header: Header,
+				list: List
+			},
+			data: {
+				blocks: [
+					{
+						type: 'header',
+						data: {
+							text: 'Hello, World!',
+							level: 1
+						}
+					},
+					{
+						type: 'list',
+						data: {
+							style: 'unordered',
+							items: ['Hello, World!']
+						}
+					}
+				]
+			}
+		});
+	});
 </script>
 
-<canvas
+<button
 	bind:this={canvasEl}
-	{width}
-	{height}
-	class="absolute z-10"
+	class="absolute z-10 py-1 px-2"
 	style="
+		width: {width}px;
+		height: {height}px;
 		top: calc(50% + {y}px);
 		left: calc(50% + {x}px);
 		background: {Color(backgroundColor, 'background', 'light')};
@@ -100,4 +134,38 @@
 		e.preventDefault();
 		cardscale = cardscale + e.deltaY * -1 / 1000;
 	}}
-/>
+	on:dblclick={() => {
+		isEditing = !isEditing;
+	}}
+>
+	{#if background === 'none'}
+		{#if text}
+			<div
+				style="
+					width: 100%;
+					height: 100%;
+					display: grid;
+				"
+				class="overflow-hidden"
+			>
+				<div
+					bind:this={editorJS}
+					style="
+						font-size: {text.size};
+						place-items: {text.align} {text.justify};
+					"
+				></div>
+			</div>
+		{:else}
+			<div class="text-center">
+				No Background
+			</div>
+		{/if}
+	{:else}
+		<img
+			src={background}
+			alt="Background"
+			class="w-full h-full object-cover"
+		/>
+	{/if}
+</button>

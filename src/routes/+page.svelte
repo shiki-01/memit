@@ -33,7 +33,14 @@
 				backgroundColor: 'stone'
 			},
 			data: {
-				text: 'Hello World'
+				text: {
+					content: 'Hello, World!',
+					justify: 'start',
+					align: 'start',
+					color: 'stone',
+					font: 'sans-serif',
+					size: 8
+				}
 			}
 		},
 		{

@@ -12,7 +12,7 @@
 		background: 'none',
 		backgroundColor: 'stone'
 	} as Canvas['style'];
-	let text = canvas?.data?.text || '';
+	let text = canvas?.data?.text?.content || '';
 
 	let canvasEl: HTMLDivElement | null = null;
 	let isTap = false;
