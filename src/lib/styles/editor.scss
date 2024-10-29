@@ -3,14 +3,6 @@
     --ce-header-size: 16px;
 }
 
-.ce-toolbar__plus, .ce-toolbar__settings-btn, .ce-popover__container {
-    scale: 0.8;
-}
-
-.ce-toolbar__actions {
-    scale: 0.5;
-}
-
 .ce-block {
     h1, h2, h3, h4, h5, h6 {
         font-size: var(--ce-header-size);

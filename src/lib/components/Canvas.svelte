@@ -79,6 +79,15 @@
 		editor.readOnly.toggle(isEditing);
 	}
 
+	$: if (editorJS) {
+		const ui = editorJS.querySelector('.ce-toolbar') as HTMLElement;
+		console.log(ui);
+		if (ui) {
+			ui.style.setProperty('scale', `${1 / cardscale}`);
+			console.log(ui.style.getPropertyValue('scale'));
+		}
+	}
+
 	onMount(async () => {
 		if (!editorJS) return;
 		const EditorJS = (await import('@editorjs/editorjs')).default;
@@ -154,6 +163,7 @@
 						font-size: {text.size};
 						place-items: {text.align} {text.justify};
 					"
+					class="w-full h-full"
 				></div>
 			</div>
 		{:else}
